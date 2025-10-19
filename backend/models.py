@@ -68,6 +68,7 @@ class BookingResponse(BaseModel):
     booking_status: str
     payment_status: str
     pnr_number: str
+    flight: Optional['FlightResponse'] = None
 
     class Config:
         from_attributes = True

@@ -18,18 +18,26 @@ const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState("search");
 
   useEffect(() => {
-    fetchCities();
-    fetchBookings();
-  }, []);
-
-  const fetchCities = async () => {
-    try {
-      const response = await axios.get(`${API_BASE}/cities`);
-      setCities(response.data);
-    } catch (error) {
-      console.error("Error fetching cities:", error);
-    }
-  };
+    const loadInitialData = async () => {
+      try {
+        // Fetch cities
+        const citiesResponse = await axios.get(`${API_BASE}/cities`);
+        setCities(citiesResponse.data);
+        
+        // Fetch bookings
+        const bookingsResponse = await axios.get(`${API_BASE}/bookings`);
+        setBookings(bookingsResponse.data);
+        
+        // Fetch all available flights
+        const flightsResponse = await axios.get(`${API_BASE}/flights`);
+        setFlights(flightsResponse.data);
+      } catch (error) {
+        console.error("Error loading initial data:", error);
+      }
+    };
+    
+    loadInitialData();
+  }, [API_BASE]);
 
   const fetchBookings = async () => {
     try {
@@ -242,12 +250,46 @@ const UserDashboard = () => {
                   <div key={booking.booking_id} className="booking-card">
                     <div className="booking-info">
                       <h3>PNR: {booking.pnr_number}</h3>
+                      {booking.flight && (
+                        <>
+                          <p className="route">
+                            <strong>{booking.flight.flight_number}</strong> - {booking.flight.source_city} → {booking.flight.destination_city}
+                          </p>
+                          <p className="booking-detail">
+                            <strong>Departure:</strong> {new Date(booking.flight.departure_time).toLocaleString('en-US', {
+                              weekday: 'short',
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                          <p className="booking-detail">
+                            <strong>Arrival:</strong> {new Date(booking.flight.arrival_time).toLocaleString('en-US', {
+                              weekday: 'short',
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </>
+                      )}
                       <p className="booking-detail">
-                        {booking.passengers_count} passenger(s)
+                        <strong>Passengers:</strong> {booking.passengers_count}
                       </p>
                       <p className="booking-time">
-                        Booked on:{" "}
-                        {new Date(booking.booking_date).toLocaleString()}
+                        <strong>Booked on:</strong>{" "}
+                        {new Date(booking.booking_date).toLocaleString('en-US', {
+                          weekday: 'short',
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                       </p>
                       <p className="booking-status">
                         Status:{" "}

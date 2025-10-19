@@ -122,6 +122,59 @@ def create_flight(
     db.refresh(db_flight)
     return db_flight
 
+@app.put("/flights/{flight_id}", response_model=models.FlightResponse)
+def update_flight(
+    flight_id: int,
+    flight: models.FlightCreate,
+    current_user: User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.user_type != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    db_flight = db.query(Flight).filter(Flight.flight_id == flight_id).first()
+    if not db_flight:
+        raise HTTPException(status_code=404, detail="Flight not found")
+    
+    # Update flight fields
+    for key, value in flight.dict().items():
+        setattr(db_flight, key, value)
+    
+    # Recalculate available seats if total_seats changed
+    if flight.total_seats != db_flight.total_seats:
+        # Keep the same number of booked seats
+        booked_seats = db_flight.total_seats - db_flight.available_seats
+        db_flight.available_seats = flight.total_seats - booked_seats
+    
+    db.commit()
+    db.refresh(db_flight)
+    return db_flight
+
+@app.delete("/flights/{flight_id}")
+def delete_flight(
+    flight_id: int,
+    current_user: User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.user_type != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    db_flight = db.query(Flight).filter(Flight.flight_id == flight_id).first()
+    if not db_flight:
+        raise HTTPException(status_code=404, detail="Flight not found")
+    
+    # Check if flight has any bookings
+    bookings_count = db.query(Booking).filter(Booking.flight_id == flight_id).count()
+    if bookings_count > 0:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot delete flight with {bookings_count} existing booking(s). Cancel bookings first."
+        )
+    
+    db.delete(db_flight)
+    db.commit()
+    return {"message": "Flight deleted successfully", "flight_id": flight_id}
+
 # Booking endpoints
 @app.post("/bookings", response_model=models.BookingResponse)
 def create_booking(
@@ -183,7 +236,9 @@ def get_user_bookings(
     current_user: User = Depends(auth.get_current_user),
     db: Session = Depends(get_db)
 ):
-    return db.query(Booking).filter(Booking.user_id == current_user.user_id).all()
+    from sqlalchemy.orm import joinedload
+    bookings = db.query(Booking).options(joinedload(Booking.flight)).filter(Booking.user_id == current_user.user_id).all()
+    return bookings
 
 # Admin endpoints
 @app.get("/admin/flights", response_model=List[models.FlightResponse])
@@ -204,7 +259,9 @@ def get_all_bookings(
     if current_user.user_type != "admin":
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    return db.query(Booking).all()
+    from sqlalchemy.orm import joinedload
+    bookings = db.query(Booking).options(joinedload(Booking.flight)).all()
+    return bookings
 
 # Utility endpoints
 @app.get("/cities")

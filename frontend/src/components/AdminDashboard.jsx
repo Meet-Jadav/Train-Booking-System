@@ -9,6 +9,7 @@ const AdminDashboard = () => {
   const [flights, setFlights] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [showAddFlight, setShowAddFlight] = useState(false);
+  const [editingFlight, setEditingFlight] = useState(null);
   const [newFlight, setNewFlight] = useState({
     flight_number: "",
     airline_id: 1,
@@ -67,6 +68,46 @@ const AdminDashboard = () => {
           (error.response?.data?.detail || "Unknown error")
       );
     }
+  };
+
+  const updateFlight = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(`${API_BASE}/flights/${editingFlight.flight_id}`, editingFlight);
+      setEditingFlight(null);
+      fetchFlights();
+      alert("Flight updated successfully!");
+    } catch (error) {
+      alert(
+        "Error updating flight: " +
+          (error.response?.data?.detail || "Unknown error")
+      );
+    }
+  };
+
+  const deleteFlight = async (flightId) => {
+    if (!window.confirm("Are you sure you want to delete this flight?")) {
+      return;
+    }
+    
+    try {
+      await axios.delete(`${API_BASE}/flights/${flightId}`);
+      fetchFlights();
+      alert("Flight deleted successfully!");
+    } catch (error) {
+      alert(
+        "Error deleting flight: " +
+          (error.response?.data?.detail || "Unknown error")
+      );
+    }
+  };
+
+  const startEditFlight = (flight) => {
+    setEditingFlight({
+      ...flight,
+      departure_time: new Date(flight.departure_time).toISOString().slice(0, 16),
+      arrival_time: new Date(flight.arrival_time).toISOString().slice(0, 16),
+    });
   };
 
   const handleLogout = () => {
@@ -230,6 +271,117 @@ const AdminDashboard = () => {
                 </div>
               )}
 
+              {editingFlight && (
+                <div className="add-flight-form">
+                  <h3>Edit Flight</h3>
+                  <form onSubmit={updateFlight} className="flight-form">
+                    <input
+                      type="text"
+                      placeholder="Flight Number"
+                      value={editingFlight.flight_number}
+                      onChange={(e) =>
+                        setEditingFlight({
+                          ...editingFlight,
+                          flight_number: e.target.value,
+                        })
+                      }
+                      className="form-input"
+                      required
+                    />
+                    <input
+                      type="text"
+                      placeholder="Source City"
+                      value={editingFlight.source_city}
+                      onChange={(e) =>
+                        setEditingFlight({
+                          ...editingFlight,
+                          source_city: e.target.value,
+                        })
+                      }
+                      className="form-input"
+                      required
+                    />
+                    <input
+                      type="text"
+                      placeholder="Destination City"
+                      value={editingFlight.destination_city}
+                      onChange={(e) =>
+                        setEditingFlight({
+                          ...editingFlight,
+                          destination_city: e.target.value,
+                        })
+                      }
+                      className="form-input"
+                      required
+                    />
+                    <input
+                      type="datetime-local"
+                      placeholder="Departure Time"
+                      value={editingFlight.departure_time}
+                      onChange={(e) =>
+                        setEditingFlight({
+                          ...editingFlight,
+                          departure_time: e.target.value,
+                        })
+                      }
+                      className="form-input"
+                      required
+                    />
+                    <input
+                      type="datetime-local"
+                      placeholder="Arrival Time"
+                      value={editingFlight.arrival_time}
+                      onChange={(e) =>
+                        setEditingFlight({
+                          ...editingFlight,
+                          arrival_time: e.target.value,
+                        })
+                      }
+                      className="form-input"
+                      required
+                    />
+                    <input
+                      type="number"
+                      placeholder="Total Seats"
+                      value={editingFlight.total_seats}
+                      onChange={(e) =>
+                        setEditingFlight({
+                          ...editingFlight,
+                          total_seats: parseInt(e.target.value),
+                        })
+                      }
+                      className="form-input"
+                      required
+                    />
+                    <input
+                      type="number"
+                      placeholder="Price"
+                      value={editingFlight.price}
+                      onChange={(e) =>
+                        setEditingFlight({
+                          ...editingFlight,
+                          price: parseFloat(e.target.value),
+                        })
+                      }
+                      className="form-input"
+                      required
+                    />
+                    <div className="form-actions">
+                      <button type="submit" className="submit-button">
+                        Update Flight
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingFlight(null)}
+                        className="cancel-button"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
               <div className="flights-list">
                 {flights.map((flight) => (
                   <div key={flight.flight_id} className="flight-card">
@@ -259,6 +411,20 @@ const AdminDashboard = () => {
                       >
                         {flight.flight_status}
                       </p>
+                      <div className="flight-buttons">
+                        <button
+                          onClick={() => startEditFlight(flight)}
+                          className="edit-button"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteFlight(flight.flight_id)}
+                          className="delete-button"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -277,13 +443,46 @@ const AdminDashboard = () => {
                   <div key={booking.booking_id} className="booking-card">
                     <div className="booking-info">
                       <h3>PNR: {booking.pnr_number}</h3>
+                      {booking.flight && (
+                        <>
+                          <p className="route">
+                            <strong>{booking.flight.flight_number}</strong> - {booking.flight.source_city} → {booking.flight.destination_city}
+                          </p>
+                          <p className="booking-detail">
+                            <strong>Departure:</strong> {new Date(booking.flight.departure_time).toLocaleString('en-US', {
+                              weekday: 'short',
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                          <p className="booking-detail">
+                            <strong>Arrival:</strong> {new Date(booking.flight.arrival_time).toLocaleString('en-US', {
+                              weekday: 'short',
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </>
+                      )}
                       <p className="booking-detail">
-                        User ID: {booking.user_id} | {booking.passengers_count}{" "}
-                        passenger(s)
+                        <strong>User ID:</strong> {booking.user_id} | <strong>Passengers:</strong> {booking.passengers_count}
                       </p>
                       <p className="booking-time">
-                        Booked on:{" "}
-                        {new Date(booking.booking_date).toLocaleString()}
+                        <strong>Booked on:</strong>{" "}
+                        {new Date(booking.booking_date).toLocaleString('en-US', {
+                          weekday: 'short',
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                       </p>
                       <p className="booking-status">
                         Status:{" "}

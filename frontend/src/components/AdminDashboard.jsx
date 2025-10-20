@@ -6,33 +6,35 @@ import axios from "axios";
 const AdminDashboard = () => {
   const { user, logout, API_BASE } = useAuth();
   const navigate = useNavigate();
-  const [flights, setFlights] = useState([]);
+  const [trains, setTrains] = useState([]);
   const [bookings, setBookings] = useState([]);
-  const [showAddFlight, setShowAddFlight] = useState(false);
-  const [editingFlight, setEditingFlight] = useState(null);
-  const [newFlight, setNewFlight] = useState({
-    flight_number: "",
-    airline_id: 1,
-    source_city: "",
-    destination_city: "",
+  const [showAddTrain, setShowAddTrain] = useState(false);
+  const [editingTrain, setEditingTrain] = useState(null);
+  const [newTrain, setNewTrain] = useState({
+    train_number: "",
+    train_name: "",
+    railway_id: 1,
+    source_station: "",
+    destination_station: "",
     departure_time: "",
     arrival_time: "",
-    total_seats: 180,
-    price: 0,
+    total_seats: 400,
+    base_fare: 0,
+    train_type: "Express",
   });
-  const [activeTab, setActiveTab] = useState("flights");
+  const [activeTab, setActiveTab] = useState("trains");
 
   useEffect(() => {
-    fetchFlights();
+    fetchTrains();
     fetchBookings();
   }, []);
 
-  const fetchFlights = async () => {
+  const fetchTrains = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/admin/flights`);
-      setFlights(response.data);
+      const response = await axios.get(`${API_BASE}/admin/trains`);
+      setTrains(response.data);
     } catch (error) {
-      console.error("Error fetching flights:", error);
+      console.error("Error fetching trains:", error);
     }
   };
 
@@ -45,68 +47,70 @@ const AdminDashboard = () => {
     }
   };
 
-  const addFlight = async (e) => {
+  const addTrain = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_BASE}/flights`, newFlight);
-      setShowAddFlight(false);
-      setNewFlight({
-        flight_number: "",
-        airline_id: 1,
-        source_city: "",
-        destination_city: "",
+      await axios.post(`${API_BASE}/trains`, newTrain);
+      setShowAddTrain(false);
+      setNewTrain({
+        train_number: "",
+        train_name: "",
+        railway_id: 1,
+        source_station: "",
+        destination_station: "",
         departure_time: "",
         arrival_time: "",
-        total_seats: 180,
-        price: 0,
+        total_seats: 400,
+        base_fare: 0,
+        train_type: "Express",
       });
-      fetchFlights();
-      alert("Flight added successfully!");
+      fetchTrains();
+      alert("Train added successfully!");
     } catch (error) {
       alert(
-        "Error adding flight: " +
+        "Error adding train: " +
           (error.response?.data?.detail || "Unknown error")
       );
     }
   };
 
-  const updateFlight = async (e) => {
+  const updateTrain = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`${API_BASE}/flights/${editingFlight.flight_id}`, editingFlight);
-      setEditingFlight(null);
-      fetchFlights();
-      alert("Flight updated successfully!");
+      await axios.put(`${API_BASE}/trains/${editingTrain.train_id}`, editingTrain);
+      setEditingTrain(null);
+      fetchTrains();
+      alert("Train updated successfully!");
     } catch (error) {
       alert(
-        "Error updating flight: " +
+        "Error updating train: " +
           (error.response?.data?.detail || "Unknown error")
       );
     }
   };
 
-  const deleteFlight = async (flightId) => {
-    if (!window.confirm("Are you sure you want to delete this flight?")) {
+  const deleteTrain = async (trainId) => {
+    if (!window.confirm("Are you sure you want to delete this train?")) {
       return;
     }
     
     try {
-      await axios.delete(`${API_BASE}/flights/${flightId}`);
-      fetchFlights();
-      alert("Flight deleted successfully!");
+      await axios.delete(`${API_BASE}/trains/${trainId}`);
+      fetchTrains();
+      alert("Train deleted successfully!");
     } catch (error) {
       alert(
-        "Error deleting flight: " +
+        "Error deleting train: " +
           (error.response?.data?.detail || "Unknown error")
       );
     }
   };
 
-  const startEditFlight = (flight) => {
-    setEditingFlight({
-      ...flight,
-      departure_time: new Date(flight.departure_time).toISOString().slice(0, 16),
-      arrival_time: new Date(flight.arrival_time).toISOString().slice(0, 16),
+  const startEditTrain = (train) => {
+    setEditingTrain({
+      ...train,
+      departure_time: new Date(train.departure_time).toISOString().slice(0, 16),
+      arrival_time: new Date(train.arrival_time).toISOString().slice(0, 16),
     });
   };
 
@@ -132,10 +136,10 @@ const AdminDashboard = () => {
       <nav className="dashboard-nav">
         <div className="nav-content">
           <button
-            onClick={() => setActiveTab("flights")}
-            className={`nav-button ${activeTab === "flights" ? "active" : ""}`}
+            onClick={() => setActiveTab("trains")}
+            className={`nav-button ${activeTab === "trains" ? "active" : ""}`}
           >
-            Manage Flights
+            Manage Trains
           </button>
           <button
             onClick={() => setActiveTab("bookings")}
@@ -147,31 +151,31 @@ const AdminDashboard = () => {
       </nav>
 
       <main className="dashboard-main">
-        {activeTab === "flights" && (
+        {activeTab === "trains" && (
           <div className="tab-content">
             <div className="card">
               <div className="card-header">
-                <h2>Manage Flights</h2>
+                <h2>Manage Trains</h2>
                 <button
-                  onClick={() => setShowAddFlight(true)}
+                  onClick={() => setShowAddTrain(true)}
                   className="add-button"
                 >
-                  Add New Flight
+                  Add New Train
                 </button>
               </div>
 
-              {showAddFlight && (
+              {showAddTrain && (
                 <div className="add-flight-form">
-                  <h3>Add New Flight</h3>
-                  <form onSubmit={addFlight} className="flight-form">
+                  <h3>Add New Train</h3>
+                  <form onSubmit={addTrain} className="flight-form">
                     <input
                       type="text"
-                      placeholder="Flight Number"
-                      value={newFlight.flight_number}
+                      placeholder="Train Number"
+                      value={newTrain.train_number}
                       onChange={(e) =>
-                        setNewFlight({
-                          ...newFlight,
-                          flight_number: e.target.value,
+                        setNewTrain({
+                          ...newTrain,
+                          train_number: e.target.value,
                         })
                       }
                       className="form-input"
@@ -179,12 +183,12 @@ const AdminDashboard = () => {
                     />
                     <input
                       type="text"
-                      placeholder="Source City"
-                      value={newFlight.source_city}
+                      placeholder="Train Name"
+                      value={newTrain.train_name}
                       onChange={(e) =>
-                        setNewFlight({
-                          ...newFlight,
-                          source_city: e.target.value,
+                        setNewTrain({
+                          ...newTrain,
+                          train_name: e.target.value,
                         })
                       }
                       className="form-input"
@@ -192,12 +196,25 @@ const AdminDashboard = () => {
                     />
                     <input
                       type="text"
-                      placeholder="Destination City"
-                      value={newFlight.destination_city}
+                      placeholder="Source Station"
+                      value={newTrain.source_station}
                       onChange={(e) =>
-                        setNewFlight({
-                          ...newFlight,
-                          destination_city: e.target.value,
+                        setNewTrain({
+                          ...newTrain,
+                          source_station: e.target.value,
+                        })
+                      }
+                      className="form-input"
+                      required
+                    />
+                    <input
+                      type="text"
+                      placeholder="Destination Station"
+                      value={newTrain.destination_station}
+                      onChange={(e) =>
+                        setNewTrain({
+                          ...newTrain,
+                          destination_station: e.target.value,
                         })
                       }
                       className="form-input"
@@ -206,10 +223,10 @@ const AdminDashboard = () => {
                     <input
                       type="datetime-local"
                       placeholder="Departure Time"
-                      value={newFlight.departure_time}
+                      value={newTrain.departure_time}
                       onChange={(e) =>
-                        setNewFlight({
-                          ...newFlight,
+                        setNewTrain({
+                          ...newTrain,
                           departure_time: e.target.value,
                         })
                       }
@@ -219,10 +236,10 @@ const AdminDashboard = () => {
                     <input
                       type="datetime-local"
                       placeholder="Arrival Time"
-                      value={newFlight.arrival_time}
+                      value={newTrain.arrival_time}
                       onChange={(e) =>
-                        setNewFlight({
-                          ...newFlight,
+                        setNewTrain({
+                          ...newTrain,
                           arrival_time: e.target.value,
                         })
                       }
@@ -232,10 +249,10 @@ const AdminDashboard = () => {
                     <input
                       type="number"
                       placeholder="Total Seats"
-                      value={newFlight.total_seats}
+                      value={newTrain.total_seats}
                       onChange={(e) =>
-                        setNewFlight({
-                          ...newFlight,
+                        setNewTrain({
+                          ...newTrain,
                           total_seats: parseInt(e.target.value),
                         })
                       }
@@ -244,24 +261,39 @@ const AdminDashboard = () => {
                     />
                     <input
                       type="number"
-                      placeholder="Price"
-                      value={newFlight.price}
+                      placeholder="Base Fare"
+                      value={newTrain.base_fare}
                       onChange={(e) =>
-                        setNewFlight({
-                          ...newFlight,
-                          price: parseFloat(e.target.value),
+                        setNewTrain({
+                          ...newTrain,
+                          base_fare: parseFloat(e.target.value),
                         })
                       }
                       className="form-input"
                       required
                     />
+                    <select
+                      value={newTrain.train_type}
+                      onChange={(e) =>
+                        setNewTrain({
+                          ...newTrain,
+                          train_type: e.target.value,
+                        })
+                      }
+                      className="form-input"
+                    >
+                      <option value="Express">Express</option>
+                      <option value="Superfast">Superfast</option>
+                      <option value="Local">Local</option>
+                      <option value="Passenger">Passenger</option>
+                    </select>
                     <div className="form-actions">
                       <button type="submit" className="submit-button">
-                        Add Flight
+                        Add Train
                       </button>
                       <button
                         type="button"
-                        onClick={() => setShowAddFlight(false)}
+                        onClick={() => setShowAddTrain(false)}
                         className="cancel-button"
                       >
                         Cancel
@@ -271,18 +303,18 @@ const AdminDashboard = () => {
                 </div>
               )}
 
-              {editingFlight && (
+              {editingTrain && (
                 <div className="add-flight-form">
-                  <h3>Edit Flight</h3>
-                  <form onSubmit={updateFlight} className="flight-form">
+                  <h3>Edit Train</h3>
+                  <form onSubmit={updateTrain} className="flight-form">
                     <input
                       type="text"
-                      placeholder="Flight Number"
-                      value={editingFlight.flight_number}
+                      placeholder="Train Number"
+                      value={editingTrain.train_number}
                       onChange={(e) =>
-                        setEditingFlight({
-                          ...editingFlight,
-                          flight_number: e.target.value,
+                        setEditingTrain({
+                          ...editingTrain,
+                          train_number: e.target.value,
                         })
                       }
                       className="form-input"
@@ -290,12 +322,12 @@ const AdminDashboard = () => {
                     />
                     <input
                       type="text"
-                      placeholder="Source City"
-                      value={editingFlight.source_city}
+                      placeholder="Train Name"
+                      value={editingTrain.train_name}
                       onChange={(e) =>
-                        setEditingFlight({
-                          ...editingFlight,
-                          source_city: e.target.value,
+                        setEditingTrain({
+                          ...editingTrain,
+                          train_name: e.target.value,
                         })
                       }
                       className="form-input"
@@ -303,12 +335,25 @@ const AdminDashboard = () => {
                     />
                     <input
                       type="text"
-                      placeholder="Destination City"
-                      value={editingFlight.destination_city}
+                      placeholder="Source Station"
+                      value={editingTrain.source_station}
                       onChange={(e) =>
-                        setEditingFlight({
-                          ...editingFlight,
-                          destination_city: e.target.value,
+                        setEditingTrain({
+                          ...editingTrain,
+                          source_station: e.target.value,
+                        })
+                      }
+                      className="form-input"
+                      required
+                    />
+                    <input
+                      type="text"
+                      placeholder="Destination Station"
+                      value={editingTrain.destination_station}
+                      onChange={(e) =>
+                        setEditingTrain({
+                          ...editingTrain,
+                          destination_station: e.target.value,
                         })
                       }
                       className="form-input"
@@ -317,10 +362,10 @@ const AdminDashboard = () => {
                     <input
                       type="datetime-local"
                       placeholder="Departure Time"
-                      value={editingFlight.departure_time}
+                      value={editingTrain.departure_time}
                       onChange={(e) =>
-                        setEditingFlight({
-                          ...editingFlight,
+                        setEditingTrain({
+                          ...editingTrain,
                           departure_time: e.target.value,
                         })
                       }
@@ -330,10 +375,10 @@ const AdminDashboard = () => {
                     <input
                       type="datetime-local"
                       placeholder="Arrival Time"
-                      value={editingFlight.arrival_time}
+                      value={editingTrain.arrival_time}
                       onChange={(e) =>
-                        setEditingFlight({
-                          ...editingFlight,
+                        setEditingTrain({
+                          ...editingTrain,
                           arrival_time: e.target.value,
                         })
                       }
@@ -343,10 +388,10 @@ const AdminDashboard = () => {
                     <input
                       type="number"
                       placeholder="Total Seats"
-                      value={editingFlight.total_seats}
+                      value={editingTrain.total_seats}
                       onChange={(e) =>
-                        setEditingFlight({
-                          ...editingFlight,
+                        setEditingTrain({
+                          ...editingTrain,
                           total_seats: parseInt(e.target.value),
                         })
                       }
@@ -355,24 +400,39 @@ const AdminDashboard = () => {
                     />
                     <input
                       type="number"
-                      placeholder="Price"
-                      value={editingFlight.price}
+                      placeholder="Base Fare"
+                      value={editingTrain.base_fare}
                       onChange={(e) =>
-                        setEditingFlight({
-                          ...editingFlight,
-                          price: parseFloat(e.target.value),
+                        setEditingTrain({
+                          ...editingTrain,
+                          base_fare: parseFloat(e.target.value),
                         })
                       }
                       className="form-input"
                       required
                     />
+                    <select
+                      value={editingTrain.train_type}
+                      onChange={(e) =>
+                        setEditingTrain({
+                          ...editingTrain,
+                          train_type: e.target.value,
+                        })
+                      }
+                      className="form-input"
+                    >
+                      <option value="Express">Express</option>
+                      <option value="Superfast">Superfast</option>
+                      <option value="Local">Local</option>
+                      <option value="Passenger">Passenger</option>
+                    </select>
                     <div className="form-actions">
                       <button type="submit" className="submit-button">
-                        Update Flight
+                        Update Train
                       </button>
                       <button
                         type="button"
-                        onClick={() => setEditingFlight(null)}
+                        onClick={() => setEditingTrain(null)}
                         className="cancel-button"
                       >
                         Cancel
@@ -383,43 +443,46 @@ const AdminDashboard = () => {
               )}
 
               <div className="flights-list">
-                {flights.map((flight) => (
-                  <div key={flight.flight_id} className="flight-card">
+                {trains.map((train) => (
+                  <div key={train.train_id} className="flight-card">
                     <div className="flight-info">
-                      <h3>{flight.flight_number}</h3>
+                      <h3>{train.train_number} - {train.train_name}</h3>
                       <p className="route">
-                        {flight.source_city} → {flight.destination_city}
+                        {train.source_station} → {train.destination_station}
                       </p>
                       <p className="flight-time">
                         Departure:{" "}
-                        {new Date(flight.departure_time).toLocaleString()}
+                        {new Date(train.departure_time).toLocaleString()}
                       </p>
                       <p className="flight-time">
                         Arrival:{" "}
-                        {new Date(flight.arrival_time).toLocaleString()}
+                        {new Date(train.arrival_time).toLocaleString()}
                       </p>
                       <p className="flight-seats">
-                        Available Seats: {flight.available_seats} /{" "}
-                        {flight.total_seats}
+                        Available Seats: {train.available_seats} /{" "}
+                        {train.total_seats}
+                      </p>
+                      <p className="flight-time">
+                        Type: {train.train_type}
                       </p>
                     </div>
 
                     <div className="flight-actions">
-                      <p className="flight-price">₹{flight.price}</p>
+                      <p className="flight-price">₹{train.base_fare}</p>
                       <p
-                        className={`flight-status status-${flight.flight_status}`}
+                        className={`flight-status status-${train.train_status}`}
                       >
-                        {flight.flight_status}
+                        {train.train_status}
                       </p>
                       <div className="flight-buttons">
                         <button
-                          onClick={() => startEditFlight(flight)}
+                          onClick={() => startEditTrain(train)}
                           className="edit-button"
                         >
                           Edit
                         </button>
                         <button
-                          onClick={() => deleteFlight(flight.flight_id)}
+                          onClick={() => deleteTrain(train.train_id)}
                           className="delete-button"
                         >
                           Delete
@@ -443,13 +506,16 @@ const AdminDashboard = () => {
                   <div key={booking.booking_id} className="booking-card">
                     <div className="booking-info">
                       <h3>PNR: {booking.pnr_number}</h3>
-                      {booking.flight && (
+                      {booking.train && (
                         <>
                           <p className="route">
-                            <strong>{booking.flight.flight_number}</strong> - {booking.flight.source_city} → {booking.flight.destination_city}
+                            <strong>{booking.train.train_number} - {booking.train.train_name}</strong>
+                          </p>
+                          <p className="route">
+                            {booking.train.source_station} → {booking.train.destination_station}
                           </p>
                           <p className="booking-detail">
-                            <strong>Departure:</strong> {new Date(booking.flight.departure_time).toLocaleString('en-US', {
+                            <strong>Departure:</strong> {new Date(booking.train.departure_time).toLocaleString('en-US', {
                               weekday: 'short',
                               year: 'numeric',
                               month: 'short',
@@ -459,7 +525,7 @@ const AdminDashboard = () => {
                             })}
                           </p>
                           <p className="booking-detail">
-                            <strong>Arrival:</strong> {new Date(booking.flight.arrival_time).toLocaleString('en-US', {
+                            <strong>Arrival:</strong> {new Date(booking.train.arrival_time).toLocaleString('en-US', {
                               weekday: 'short',
                               year: 'numeric',
                               month: 'short',

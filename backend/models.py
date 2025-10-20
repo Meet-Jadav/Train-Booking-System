@@ -27,24 +27,26 @@ class UserResponse(UserBase):
     class Config:
         from_attributes = True
 
-# Flight Models
-class FlightBase(BaseModel):
-    flight_number: str
-    airline_id: int
-    source_city: str
-    destination_city: str
+# Train Models
+class TrainBase(BaseModel):
+    train_number: str
+    train_name: str
+    railway_id: int
+    source_station: str
+    destination_station: str
     departure_time: datetime
     arrival_time: datetime
     total_seats: int
-    price: float
+    base_fare: float
+    train_type: Optional[str] = "Express"
 
-class FlightCreate(FlightBase):
+class TrainCreate(TrainBase):
     pass
 
-class FlightResponse(FlightBase):
-    flight_id: int
+class TrainResponse(TrainBase):
+    train_id: int
     available_seats: int
-    flight_status: str
+    train_status: str
     created_at: datetime
 
     class Config:
@@ -52,7 +54,7 @@ class FlightResponse(FlightBase):
 
 # Booking Models
 class BookingBase(BaseModel):
-    flight_id: int
+    train_id: int
     passengers_count: int
 
 class BookingCreate(BookingBase):
@@ -61,27 +63,27 @@ class BookingCreate(BookingBase):
 class BookingResponse(BaseModel):
     booking_id: int
     user_id: int
-    flight_id: int
+    train_id: int
     booking_date: datetime
     passengers_count: int
     total_amount: float
     booking_status: str
     payment_status: str
     pnr_number: str
-    flight: Optional['FlightResponse'] = None
+    train: Optional['TrainResponse'] = None
 
     class Config:
         from_attributes = True
 
-# Airline Models
-class AirlineBase(BaseModel):
-    airline_name: str
-    airline_code: str
+# Railway Models
+class RailwayBase(BaseModel):
+    railway_name: str
+    railway_code: str
     contact_number: Optional[str] = None
     email: Optional[EmailStr] = None
 
-class AirlineResponse(AirlineBase):
-    airline_id: int
+class RailwayResponse(RailwayBase):
+    railway_id: int
     is_active: bool
 
     class Config:

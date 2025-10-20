@@ -6,9 +6,9 @@ import axios from "axios";
 const UserDashboard = () => {
   const { user, logout, API_BASE } = useAuth();
   const navigate = useNavigate();
-  const [flights, setFlights] = useState([]);
+  const [trains, setTrains] = useState([]);
   const [bookings, setBookings] = useState([]);
-  const [cities, setCities] = useState({ sources: [], destinations: [] });
+  const [stations, setStations] = useState({ sources: [], destinations: [] });
   const [searchParams, setSearchParams] = useState({
     source: "",
     destination: "",
@@ -20,17 +20,17 @@ const UserDashboard = () => {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        // Fetch cities
-        const citiesResponse = await axios.get(`${API_BASE}/cities`);
-        setCities(citiesResponse.data);
+        // Fetch stations
+        const stationsResponse = await axios.get(`${API_BASE}/stations`);
+        setStations(stationsResponse.data);
         
         // Fetch bookings
         const bookingsResponse = await axios.get(`${API_BASE}/bookings`);
         setBookings(bookingsResponse.data);
         
-        // Fetch all available flights
-        const flightsResponse = await axios.get(`${API_BASE}/flights`);
-        setFlights(flightsResponse.data);
+        // Fetch all available trains
+        const trainsResponse = await axios.get(`${API_BASE}/trains`);
+        setTrains(trainsResponse.data);
       } catch (error) {
         console.error("Error loading initial data:", error);
       }
@@ -48,7 +48,7 @@ const UserDashboard = () => {
     }
   };
 
-  const searchFlights = async () => {
+  const searchTrains = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -57,24 +57,24 @@ const UserDashboard = () => {
         params.append("destination", searchParams.destination);
       if (searchParams.date) params.append("date", searchParams.date);
 
-      const response = await axios.get(`${API_BASE}/flights?${params}`);
-      setFlights(response.data);
+      const response = await axios.get(`${API_BASE}/trains?${params}`);
+      setTrains(response.data);
     } catch (error) {
-      console.error("Error searching flights:", error);
+      console.error("Error searching trains:", error);
     }
     setLoading(false);
   };
 
-  const bookFlight = async (flightId, passengers) => {
+  const bookTrain = async (trainId, passengers) => {
     try {
       await axios.post(`${API_BASE}/bookings`, {
-        flight_id: flightId,
+        train_id: trainId,
         passengers_count: passengers,
         payment_method: "credit_card",
       });
       alert("Booking successful!");
       fetchBookings();
-      searchFlights();
+      searchTrains();
     } catch (error) {
       alert(
         "Booking failed: " + (error.response?.data?.detail || "Unknown error")
@@ -91,7 +91,7 @@ const UserDashboard = () => {
     <div className="dashboard">
       <header className="dashboard-header">
         <div className="header-content">
-          <h1>Flight Booking System</h1>
+          <h1>Train Booking System</h1>
           <div className="user-info">
             <span>Welcome, {user?.username}</span>
             <button onClick={handleLogout} className="logout-button">
@@ -107,7 +107,7 @@ const UserDashboard = () => {
             onClick={() => setActiveTab("search")}
             className={`nav-button ${activeTab === "search" ? "active" : ""}`}
           >
-            Search Flights
+            Search Trains
           </button>
           <button
             onClick={() => setActiveTab("bookings")}
@@ -122,11 +122,11 @@ const UserDashboard = () => {
         {activeTab === "search" && (
           <div className="tab-content">
             <div className="card">
-              <h2>Search Flights</h2>
+              <h2>Search Trains</h2>
 
               <div className="search-form">
                 <div className="form-group">
-                  <label>From</label>
+                  <label>From Station</label>
                   <select
                     value={searchParams.source}
                     onChange={(e) =>
@@ -137,17 +137,17 @@ const UserDashboard = () => {
                     }
                     className="form-input"
                   >
-                    <option value="">Select Source</option>
-                    {cities.sources.map((city) => (
-                      <option key={city} value={city}>
-                        {city}
+                    <option value="">Select Source Station</option>
+                    {stations.sources.map((station) => (
+                      <option key={station} value={station}>
+                        {station}
                       </option>
                     ))}
                   </select>
                 </div>
 
                 <div className="form-group">
-                  <label>To</label>
+                  <label>To Station</label>
                   <select
                     value={searchParams.destination}
                     onChange={(e) =>
@@ -158,10 +158,10 @@ const UserDashboard = () => {
                     }
                     className="form-input"
                   >
-                    <option value="">Select Destination</option>
-                    {cities.destinations.map((city) => (
-                      <option key={city} value={city}>
-                        {city}
+                    <option value="">Select Destination Station</option>
+                    {stations.destinations.map((station) => (
+                      <option key={station} value={station}>
+                        {station}
                       </option>
                     ))}
                   </select>
@@ -181,37 +181,40 @@ const UserDashboard = () => {
 
                 <div className="form-group">
                   <button
-                    onClick={searchFlights}
+                    onClick={searchTrains}
                     disabled={loading}
                     className="search-button"
                   >
-                    {loading ? "Searching..." : "Search Flights"}
+                    {loading ? "Searching..." : "Search Trains"}
                   </button>
                 </div>
               </div>
 
               <div className="flights-list">
-                {flights.map((flight) => (
-                  <div key={flight.flight_id} className="flight-card">
+                {trains.map((train) => (
+                  <div key={train.train_id} className="flight-card">
                     <div className="flight-info">
-                      <h3>{flight.flight_number}</h3>
+                      <h3>{train.train_number} - {train.train_name}</h3>
                       <p className="route">
-                        {flight.source_city} → {flight.destination_city}
+                        {train.source_station} → {train.destination_station}
                       </p>
                       <p className="flight-time">
                         Departure:{" "}
-                        {new Date(flight.departure_time).toLocaleString()}
+                        {new Date(train.departure_time).toLocaleString()}
                       </p>
                       <p className="flight-time">
                         Arrival:{" "}
-                        {new Date(flight.arrival_time).toLocaleString()}
+                        {new Date(train.arrival_time).toLocaleString()}
+                      </p>
+                      <p className="flight-time">
+                        Type: {train.train_type}
                       </p>
                     </div>
 
                     <div className="flight-actions">
-                      <p className="flight-price">₹{flight.price}</p>
+                      <p className="flight-price">₹{train.base_fare}</p>
                       <p className="flight-seats">
-                        {flight.available_seats} seats available
+                        {train.available_seats} seats available
                       </p>
                       <button
                         onClick={() => {
@@ -219,7 +222,7 @@ const UserDashboard = () => {
                             "Enter number of passengers:"
                           );
                           if (passengers && !isNaN(passengers)) {
-                            bookFlight(flight.flight_id, parseInt(passengers));
+                            bookTrain(train.train_id, parseInt(passengers));
                           }
                         }}
                         className="book-button"
@@ -230,9 +233,9 @@ const UserDashboard = () => {
                   </div>
                 ))}
 
-                {flights.length === 0 && !loading && (
+                {trains.length === 0 && !loading && (
                   <p className="no-results">
-                    No flights found. Try different search criteria.
+                    No trains found. Try different search criteria.
                   </p>
                 )}
               </div>
@@ -250,13 +253,16 @@ const UserDashboard = () => {
                   <div key={booking.booking_id} className="booking-card">
                     <div className="booking-info">
                       <h3>PNR: {booking.pnr_number}</h3>
-                      {booking.flight && (
+                      {booking.train && (
                         <>
                           <p className="route">
-                            <strong>{booking.flight.flight_number}</strong> - {booking.flight.source_city} → {booking.flight.destination_city}
+                            <strong>{booking.train.train_number} - {booking.train.train_name}</strong>
+                          </p>
+                          <p className="route">
+                            {booking.train.source_station} → {booking.train.destination_station}
                           </p>
                           <p className="booking-detail">
-                            <strong>Departure:</strong> {new Date(booking.flight.departure_time).toLocaleString('en-US', {
+                            <strong>Departure:</strong> {new Date(booking.train.departure_time).toLocaleString('en-US', {
                               weekday: 'short',
                               year: 'numeric',
                               month: 'short',
@@ -266,7 +272,7 @@ const UserDashboard = () => {
                             })}
                           </p>
                           <p className="booking-detail">
-                            <strong>Arrival:</strong> {new Date(booking.flight.arrival_time).toLocaleString('en-US', {
+                            <strong>Arrival:</strong> {new Date(booking.train.arrival_time).toLocaleString('en-US', {
                               weekday: 'short',
                               year: 'numeric',
                               month: 'short',
@@ -274,6 +280,9 @@ const UserDashboard = () => {
                               hour: '2-digit',
                               minute: '2-digit'
                             })}
+                          </p>
+                          <p className="booking-detail">
+                            <strong>Type:</strong> {booking.train.train_type}
                           </p>
                         </>
                       )}

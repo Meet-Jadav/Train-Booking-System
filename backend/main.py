@@ -5,11 +5,11 @@ from datetime import datetime, timedelta
 from typing import List
 import secrets
 
-from database import SessionLocal, create_tables, init_data, User, Flight, Booking, Payment, Airline
+from database import SessionLocal, create_tables, init_data, User, Train, Booking, Payment, Railway
 import models
 import auth
 
-app = FastAPI(title="Flight Booking System", version="1.0.0")
+app = FastAPI(title="Train Booking System", version="1.0.0")
 
 # CORS middleware
 app.add_middleware(
@@ -83,97 +83,97 @@ def login(user_data: models.UserLogin, db: Session = Depends(get_db)):
         "user_id": user.user_id
     }
 
-# Flight endpoints
-@app.get("/flights", response_model=List[models.FlightResponse])
-def get_flights(
+# Train endpoints
+@app.get("/trains", response_model=List[models.TrainResponse])
+def get_trains(
     source: str = None,
     destination: str = None,
     date: str = None,
     db: Session = Depends(get_db)
 ):
-    query = db.query(Flight).filter(Flight.available_seats > 0)
+    query = db.query(Train).filter(Train.available_seats > 0)
     
     if source:
-        query = query.filter(Flight.source_city == source)
+        query = query.filter(Train.source_station == source)
     if destination:
-        query = query.filter(Flight.destination_city == destination)
+        query = query.filter(Train.destination_station == destination)
     if date:
-        query = query.filter(Flight.departure_time >= date)
+        query = query.filter(Train.departure_time >= date)
     
     return query.all()
 
-@app.post("/flights", response_model=models.FlightResponse)
-def create_flight(
-    flight: models.FlightCreate,
+@app.post("/trains", response_model=models.TrainResponse)
+def create_train(
+    train: models.TrainCreate,
     current_user: User = Depends(auth.get_current_user),
     db: Session = Depends(get_db)
 ):
     if current_user.user_type != "admin":
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    db_flight = Flight(
-        **flight.dict(),
-        available_seats=flight.total_seats,
+    db_train = Train(
+        **train.dict(),
+        available_seats=train.total_seats,
         created_by=current_user.user_id
     )
     
-    db.add(db_flight)
+    db.add(db_train)
     db.commit()
-    db.refresh(db_flight)
-    return db_flight
+    db.refresh(db_train)
+    return db_train
 
-@app.put("/flights/{flight_id}", response_model=models.FlightResponse)
-def update_flight(
-    flight_id: int,
-    flight: models.FlightCreate,
+@app.put("/trains/{train_id}", response_model=models.TrainResponse)
+def update_train(
+    train_id: int,
+    train: models.TrainCreate,
     current_user: User = Depends(auth.get_current_user),
     db: Session = Depends(get_db)
 ):
     if current_user.user_type != "admin":
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    db_flight = db.query(Flight).filter(Flight.flight_id == flight_id).first()
-    if not db_flight:
-        raise HTTPException(status_code=404, detail="Flight not found")
+    db_train = db.query(Train).filter(Train.train_id == train_id).first()
+    if not db_train:
+        raise HTTPException(status_code=404, detail="Train not found")
     
-    # Update flight fields
-    for key, value in flight.dict().items():
-        setattr(db_flight, key, value)
+    # Update train fields
+    for key, value in train.dict().items():
+        setattr(db_train, key, value)
     
     # Recalculate available seats if total_seats changed
-    if flight.total_seats != db_flight.total_seats:
+    if train.total_seats != db_train.total_seats:
         # Keep the same number of booked seats
-        booked_seats = db_flight.total_seats - db_flight.available_seats
-        db_flight.available_seats = flight.total_seats - booked_seats
+        booked_seats = db_train.total_seats - db_train.available_seats
+        db_train.available_seats = train.total_seats - booked_seats
     
     db.commit()
-    db.refresh(db_flight)
-    return db_flight
+    db.refresh(db_train)
+    return db_train
 
-@app.delete("/flights/{flight_id}")
-def delete_flight(
-    flight_id: int,
+@app.delete("/trains/{train_id}")
+def delete_train(
+    train_id: int,
     current_user: User = Depends(auth.get_current_user),
     db: Session = Depends(get_db)
 ):
     if current_user.user_type != "admin":
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    db_flight = db.query(Flight).filter(Flight.flight_id == flight_id).first()
-    if not db_flight:
-        raise HTTPException(status_code=404, detail="Flight not found")
+    db_train = db.query(Train).filter(Train.train_id == train_id).first()
+    if not db_train:
+        raise HTTPException(status_code=404, detail="Train not found")
     
-    # Check if flight has any bookings
-    bookings_count = db.query(Booking).filter(Booking.flight_id == flight_id).count()
+    # Check if train has any bookings
+    bookings_count = db.query(Booking).filter(Booking.train_id == train_id).count()
     if bookings_count > 0:
         raise HTTPException(
             status_code=400, 
-            detail=f"Cannot delete flight with {bookings_count} existing booking(s). Cancel bookings first."
+            detail=f"Cannot delete train with {bookings_count} existing booking(s). Cancel bookings first."
         )
     
-    db.delete(db_flight)
+    db.delete(db_train)
     db.commit()
-    return {"message": "Flight deleted successfully", "flight_id": flight_id}
+    return {"message": "Train deleted successfully", "train_id": train_id}
 
 # Booking endpoints
 @app.post("/bookings", response_model=models.BookingResponse)
@@ -182,16 +182,16 @@ def create_booking(
     current_user: User = Depends(auth.get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Get flight
-    flight = db.query(Flight).filter(Flight.flight_id == booking.flight_id).first()
-    if not flight:
-        raise HTTPException(status_code=404, detail="Flight not found")
+    # Get train
+    train = db.query(Train).filter(Train.train_id == booking.train_id).first()
+    if not train:
+        raise HTTPException(status_code=404, detail="Train not found")
     
-    if flight.available_seats < booking.passengers_count:
+    if train.available_seats < booking.passengers_count:
         raise HTTPException(status_code=400, detail="Not enough seats available")
     
     # Calculate total amount
-    total_amount = flight.price * booking.passengers_count
+    total_amount = train.base_fare * booking.passengers_count
     
     # Generate PNR
     pnr_number = secrets.token_hex(5).upper()
@@ -199,14 +199,14 @@ def create_booking(
     # Create booking
     db_booking = Booking(
         user_id=current_user.user_id,
-        flight_id=booking.flight_id,
+        train_id=booking.train_id,
         passengers_count=booking.passengers_count,
         total_amount=total_amount,
         pnr_number=pnr_number
     )
     
     # Update available seats
-    flight.available_seats -= booking.passengers_count
+    train.available_seats -= booking.passengers_count
     
     db.add(db_booking)
     db.commit()
@@ -237,19 +237,19 @@ def get_user_bookings(
     db: Session = Depends(get_db)
 ):
     from sqlalchemy.orm import joinedload
-    bookings = db.query(Booking).options(joinedload(Booking.flight)).filter(Booking.user_id == current_user.user_id).all()
+    bookings = db.query(Booking).options(joinedload(Booking.train)).filter(Booking.user_id == current_user.user_id).all()
     return bookings
 
 # Admin endpoints
-@app.get("/admin/flights", response_model=List[models.FlightResponse])
-def get_all_flights(
+@app.get("/admin/trains", response_model=List[models.TrainResponse])
+def get_all_trains(
     current_user: User = Depends(auth.get_current_user),
     db: Session = Depends(get_db)
 ):
     if current_user.user_type != "admin":
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    return db.query(Flight).all()
+    return db.query(Train).all()
 
 @app.get("/admin/bookings", response_model=List[models.BookingResponse])
 def get_all_bookings(
@@ -260,29 +260,29 @@ def get_all_bookings(
         raise HTTPException(status_code=403, detail="Not authorized")
     
     from sqlalchemy.orm import joinedload
-    bookings = db.query(Booking).options(joinedload(Booking.flight)).all()
+    bookings = db.query(Booking).options(joinedload(Booking.train)).all()
     return bookings
 
 # Utility endpoints
-@app.get("/cities")
-def get_cities(db: Session = Depends(get_db)):
-    sources = db.query(Flight.source_city).distinct().all()
-    destinations = db.query(Flight.destination_city).distinct().all()
+@app.get("/stations")
+def get_stations(db: Session = Depends(get_db)):
+    sources = db.query(Train.source_station).distinct().all()
+    destinations = db.query(Train.destination_station).distinct().all()
     
     return {
         "sources": [s[0] for s in sources],
         "destinations": [d[0] for d in destinations]
     }
 
-@app.get("/airlines")
-def get_airlines(db: Session = Depends(get_db)):
-    airlines = db.query(Airline).all()
-    return [{"airline_id": a.airline_id, "airline_name": a.airline_name} for a in airlines]
+@app.get("/railways")
+def get_railways(db: Session = Depends(get_db)):
+    railways = db.query(Railway).all()
+    return [{"railway_id": r.railway_id, "railway_name": r.railway_name} for r in railways]
 
 # Health check
 @app.get("/")
 def read_root():
-    return {"message": "Flight Booking System API is running!"}
+    return {"message": "Train Booking System API is running!"}
 
 if __name__ == "__main__":
     import uvicorn

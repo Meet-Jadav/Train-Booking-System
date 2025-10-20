@@ -1,13 +1,13 @@
-﻿# ✈️ Flight Booking System 🚀
+﻿# 🚂 Train Booking System 🎫
 
-This project is a full-stack flight booking system that allows users to search for flights, manage bookings, and handle user authentication. Administrators can manage flights and view all bookings. It provides a seamless experience for both users and administrators to interact with the flight booking service.
+This project is a full-stack train booking system that allows users to search for trains, manage bookings, and handle user authentication. Administrators can manage trains and view all bookings. It provides a seamless experience for both users and administrators to interact with the train booking service.
 
 ## 🌟 Key Features
 
 - **User Authentication:** Secure user registration and login with JWT-based authentication.
-- **Flight Search:** Users can search for flights based on origin, destination, and date.
-- **Booking Management:** Users can view and manage their flight bookings.
-- **Admin Dashboard:** Administrators can manage flights (add, update, delete) and view all bookings.
+- **Train Search:** Users can search for trains based on source station, destination station, and date.
+- **Booking Management:** Users can view and manage their train bookings.
+- **Admin Dashboard:** Administrators can manage trains (add, update, delete) and view all bookings.
 - **Real-time Data Validation:** Utilizes Pydantic for data validation, ensuring data integrity.
 - **Secure Password Handling:** Employs `passlib` for secure password hashing.
 - **CORS Support:** Configured to allow requests from frontend origins, enhancing security.
@@ -26,7 +26,7 @@ This project is a full-stack flight booking system that allows users to search f
   - `passlib`: For password hashing.
   - `python-jose`: For JWT encoding and decoding.
 - **Database:**
-  - SQLite: Lightweight database for storing user, flight, and booking data.
+  - SQLite: Lightweight database for storing user, train, and booking data.
 - **Authentication:**
   - JWT (JSON Web Tokens): For secure authentication and authorization.
 - **Build Tools:**
@@ -88,7 +88,7 @@ This project is a full-stack flight booking system that allows users to search f
 ## 💻 Project Structure
 
 ```
-📂 FlightBookingSystem
+📂 TrainBookingSystem
 ├── 📁 backend
 │   ├── 📜 auth.py
 │   ├── 📜 database.py
